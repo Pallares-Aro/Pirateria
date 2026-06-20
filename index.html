@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mi Cineoteca</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0A0A0F;--surface:#111118;--card:#16161F;--red:#E50914;--red-dim:#8B0000;--text:#F5F5F5;--muted:#888;--border:#222}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 40px;background:linear-gradient(to bottom,rgba(10,10,15,.95) 0%,transparent 100%);backdrop-filter:blur(4px)}
+    .logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--red);letter-spacing:2px;text-shadow:0 0 30px rgba(229,9,20,.5)}
+    .logo span{color:var(--text)}
+    .nav-count{font-size:.75rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+    .hero{position:relative;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:140px 40px 50px;text-align:center;overflow:hidden}
+    .hero::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:320px;height:520px;background:conic-gradient(from -8deg at 50% 0%,transparent 0deg,rgba(229,9,20,.08) 16deg,transparent 16deg);pointer-events:none}
+    .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:100px;background:linear-gradient(to bottom,transparent,var(--bg))}
+    .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,7vw,5.5rem);letter-spacing:4px;line-height:1;margin-bottom:12px}
+    .hero h1 em{font-style:normal;color:var(--red);text-shadow:0 0 40px rgba(229,9,20,.6)}
+    .hero p{color:var(--muted);font-size:.95rem;margin-bottom:36px;font-weight:300}
+
+    .search-wrap{position:relative;width:100%;max-width:520px}
+    .search-wrap svg{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+    #search{width:100%;padding:16px 18px 16px 50px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:var(--text);font-size:1rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s,background .2s}
+    #search::placeholder{color:var(--muted)}
+    #search:focus{border-color:var(--red);background:rgba(229,9,20,.06)}
+
+    .filters{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:0 40px 36px}
+    .filter-btn{padding:7px 18px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.8rem;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s;letter-spacing:.5px;text-transform:uppercase}
+    .filter-btn:hover,.filter-btn.active{background:var(--red);border-color:var(--red);color:#fff}
+
+    .section-header{display:flex;align-items:baseline;gap:14px;padding:0 40px 20px}
+    .section-header h2{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:2px}
+    .section-header .count{font-size:.75rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:18px;padding:0 40px 80px}
+
+    .card{position:relative;border-radius:10px;overflow:hidden;background:var(--card);cursor:pointer;transition:transform .25s ease,box-shadow .25s ease;border:1px solid transparent}
+    .card:hover{transform:translateY(-6px) scale(1.03);box-shadow:0 20px 50px rgba(0,0,0,.7),0 0 0 1px var(--red-dim);border-color:var(--red-dim);z-index:2}
+    .card-poster{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:var(--surface)}
+    .card-poster-placeholder{width:100%;aspect-ratio:2/3;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);gap:12px}
+    .card-poster-placeholder svg{opacity:.25}
+    .card-poster-placeholder .ph-title{font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1px;color:var(--muted);text-align:center;padding:0 10px;line-height:1.2}
+
+    .card-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,15,.98) 0%,rgba(10,10,15,.3) 60%,transparent 100%);opacity:0;transition:opacity .25s;display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+    .card:hover .card-overlay{opacity:1}
+
+    .card-info{padding:10px 12px;border-top:1px solid var(--border)}
+    .card-title{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+    .card-meta{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--muted)}
+    .card-dot{width:3px;height:3px;border-radius:50%;background:var(--border)}
+
+    .ov-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;margin-bottom:8px}
+    .ov-play{display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:.78rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s;text-decoration:none}
+    .ov-play:hover{background:#c1070f}
+
+    .empty{grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;padding:80px 20px;color:var(--muted);gap:12px}
+    .empty svg{opacity:.2}
+    .empty p{font-size:.9rem}
+
+    .modal-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--card);border-radius:16px;width:100%;max-width:540px;border:1px solid var(--border);overflow:hidden;position:relative;animation:popIn .2s ease}
+    @keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+    .modal-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.1);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);z-index:10;transition:background .15s}
+    .modal-close:hover{background:var(--red)}
+    .modal-poster{width:100%;height:230px;object-fit:cover;object-position:top;display:block}
+    .modal-poster-ph{width:100%;height:190px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center}
+    .modal-body{padding:22px}
+    .modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:2px;margin-bottom:8px}
+    .modal-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-bottom:18px;align-items:center}
+    .modal-meta .tag{background:rgba(229,9,20,.15);color:var(--red);padding:3px 10px;border-radius:5px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+    .modal-actions{display:flex;gap:10px}
+    .btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--red);color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:.88rem;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s;text-decoration:none}
+    .btn-primary:hover{background:#c1070f}
+
+    footer{text-align:center;padding:30px;border-top:1px solid var(--border);color:var(--muted);font-size:.75rem;letter-spacing:.5px}
+
+    @media(max-width:600px){nav{padding:14px 20px}.hero{padding:110px 20px 36px}.filters{padding:0 16px 24px}.section-header{padding:0 16px 14px}.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;padding:0 16px 60px}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Mi<span>Cine</span></div>
+  <div class="nav-count" id="nav-count"></div>
+</nav>
+
+<section class="hero">
+  <h1>Tu <em>Cineoteca</em><br>Personal</h1>
+  <p>Todas tus series y películas, en un solo lugar.</p>
+  <div class="search-wrap">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="search" type="text" placeholder="Buscar por título o año…"/>
+  </div>
+</section>
+
+<div class="filters" id="filters"></div>
+
+<div class="section-header">
+  <h2>Catálogo</h2>
+  <span class="count" id="showing-count"></span>
+</div>
+<div class="grid" id="grid"></div>
+
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<footer>Mi Cineoteca &mdash; Biblioteca personal</footer>
+
+<script>
+const MOVIES = [
+  {
+    "title": "El arte de Sara",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/nP2PRGSmLdbZtQtoXPPppcDAsNw.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/q4fdrwlx36lp0cy2k5y9m/El-arte-de-Sara-2026.m3u?rlkey=x4gy7xobuaknetcxjdffj2re8&st=w8jyq5m6&dl=1"
+  },
+  {
+    "title": "Fresh Off the Boat",
+    "year": "2015",
+    "poster": "https://image.tmdb.org/t/p/original/o8ekdtv98EnrymVLw3VJ2WoFBoM.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Fresh%20Off%20the%20Boat%20(2015).m3u"
+  },
+  {
+    "title": "Dark",
+    "year": "2017",
+    "poster": "https://image.tmdb.org/t/p/original/zqZ9N1BSRVk8LKlYpRIQI8fHzAs.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Dark%20(2017).m3u"
+  },
+  {
+    "title": "Cómo llegar al cielo desde Belfast",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/7A37vpIWIAQqaoFtnzaVSVKcaZ7.jpg",
+    "file": "https://archive.org/download/como-llegar-al-cielo-desde-belfast-2026/C%C3%B3mo%20llegar%20al%20cielo%20desde%20Belfast%20%282026%29.m3u"
+  },
+  {
+    "title": "en el barro",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/xJCzIdSHV0d5lwbhaCWldlikKdU.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/En%20el%20barro%20(2025)"
+  },
+  {
+    "title": "Museo de la Inocencia",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/gdDPQ5vs7HdhoqUqV0DOgqUPcXU.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/95g5rlo7vgks11101lxnc/Museo-de-la-Inocencia-2026?rlkey=x4u8y4s2rdjznjoczx9qhddib&st=we1at8i7&.m3u"
+  },
+  {
+    "title": "Free Bert",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/18jsL1sUIDL3ice67KoNkq22K6m.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/198jmctgkh7fcp2b9dd1o/Free-Bert-2026.m3u?rlkey=ss3eow9fjx2dmfff6b4lcijvc&st=280txcrx&.m3u"
+  },
+  {
+    "title": "Finding Her Edge",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/7t6iXlbfoBSfVyINLRHms5kqfze.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/vzxjiwbc0kr15g0rmnp65/Finding-Her-Edge-2026.m3u?rlkey=9hml67w2gwx6imb31pdnmur83&st=8ch7pvsf&.m3u"
+  },
+  {
+    "title": "Bridgerton",
+    "year": "2020",
+    "poster": "https://image.tmdb.org/t/p/original/uXTg565ahu9RwonCX1V2Hex1NU6.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Bridgerton%20(2020)"
+  },
+  {
+    "title": "Girl from Nowhere",
+    "year": "2018",
+    "poster": "https://image.tmdb.org/t/p/original/rPmbn8ATxwy3UtIHE0cLnNSEaGu.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/h3o8sax3duaf27kw5q90q/Girl-from-Nowhere-2018-op2?rlkey=mrllyu5xkszg4eeceg52snu7q&st=pwnyfajb&.m3u"
+  },
+  {
+    "title": "Envidiosa",
+    "year": "2024",
+    "poster": "https://image.tmdb.org/t/p/original/tuXxPutwb1QteO4LtMISN4RAXEA.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/3m7tt1gu97tqq2vsrv853/Envidioso-2024-op2?rlkey=6g922uyocczvtoi40734xbg5v&st=hbejo043&.m3u"
+  },
+  {
+    "title": "To Lose",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/nj2woKV1zSIpOVJoddtGabd38Zw.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/7vk18qlquepph2qh33sr8/amar-perder-2025?rlkey=m165chz4or07mm3jylevgf2d0&st=sqoc83sz&.m3u"
+  },
+  {
+    "title": "Cashero",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/dm6RoaKgkGUxckamMDzsbqtLhFv.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/whfemtj359gzp5lkdvkyn/Cashero-2025?rlkey=bfpdtpfhwutcxcifhtxiu0j4p&st=lsla03g6&.m3u"
+  },
+  {
+    "title": "Se puede traducir este amor",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/zgUh4cgalSzBjbsT5P0qmU7Rjzk.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/4gzcj0ezkf0n3z2n3sdha/Se-puede-traducir-este-amor-2026?rlkey=a3kstknbfdy6tkl1gy43mjhy0&st=s7o890qd&.m3u"
+  },
+  {
+    "title": "Taskaree La red del contrabandista",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/ly6jaxMxzha70e0mQIFRJpPxXJG.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/ztanjqcwafca3dtsrekgq/Taskaree-La-red-del-contrabandista-2026?rlkey=f0v5y7cppvozogdf7cpc012zh&st=4s5fqeov&.m3u"
+  },
+  {
+    "title": "el y ella",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/sVl7GPi1aGX5wnNsBZDf93hu9gU.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/64ypyg9u8gvou9cgrlvl6/L-Y-ELLA-2026?rlkey=8ztsl1ov518mmi3jcifxeasy8&st=27bsbglp&.m3u"
+  },
+  {
+    "title": "amor de oficina",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/drpeMcOyFlaoSP2R5ZkWgbqLfDK.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/gwafggkaaea0ctophxvfs/Love-from-9-to-5-2026?rlkey=t5he68kid9zfegqkmva0mo9mx&st=qwr3qwgi&.m3u"
+  },
+  {
+    "title": "mi novio coreano",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/aZZ6okqrvgo3ZGGFCQb1zq5fhdy.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/8jkt4v3oucozwz90u1tti/Mi-novio-coreano-2026?rlkey=lfgzjew4kxfy5sq91xb1nyq5b&st=t7ypdrto&.m3u"
+  },
+  {
+    "title": "el tiempo de las moscas",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/9n2HM0guy6Wn95EshDj7Uw6XWd2.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/w3jovtx3j8a2q69lxtlq1/el-tiempo-de-las-moscas-2026?rlkey=h19cxbk1dofo1ilh8zloqwyyg&st=6gjnsqhm&.m3u"
+  },
+  {
+    "title": "en fuga",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/auBp8c189r2G5rd34wbwQ18YwHa.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/7vjfpsy8jsaj3d4ycgt96/en-fuga-2026?rlkey=x5r3abrzy1pd803z39k7udssj&st=2s514l0n&.m3u"
+  },
+  {
+    "title": "Land of Sin",
+    "year": "2026",
+    "poster": "https://image.tmdb.org/t/p/original/kAy0vnaxCPcLrmPCHWgfwWoWelL.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/k7gublhaa9f8wwdcb0ygw/Land-of-Sin-2026?rlkey=iuvbuwaro37ptv1u4c5493h71&st=d2yg5sjz&.m3u"
+  },
+  {
+    "title": "The Accident",
+    "year": "2024",
+    "poster": "https://image.tmdb.org/t/p/original/1GWDodKrziDGOWeNc1ezJVqTfcr.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/ifit3bc3srzgjrtcxxsoj/The-Accident-2024?rlkey=3oe6ve0390jjsnyjctmee2g6m&st=1vdei6ah&.m3u"
+  },
+  {
+    "title": "Estado de la fuga 1986",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/qSMv90pF9WbWyQAfKTjr0qUc1rq.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Estado%20de%20la%20fuga%201986%20(2025)"
+  },
+  {
+    "title": "Man vs Baby",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/15g7XBiKyzHh9D6ZV5kls5JyVJz.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/il376vk9yb0lkpric8cwk/Man-vs-Baby-2025?rlkey=qi21q0gz9f5u2dl9l0ip19ljr&st=ilr93woo&.m3u"
+  },
+  {
+    "title": "Los abandonos",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/wZScARSgDCrGuqXTqHQvKBgz2Lt.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/umyq6bejlh89gbn302llv/Los-abandonos-2025?rlkey=q6efo9c503a2n1f0z6nxfbgx5&st=koyhmfgv&.m3u"
+  },
+  {
+    "title": "Cobra Kai",
+    "year": "2018",
+    "poster": "https://image.tmdb.org/t/p/original/5qMupAz4A9EN5Rutrkmov45mNXZ.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/320hfjbi4cvl64b7i0aza/cobra-kai-6.m3u?rlkey=x9gy51e2n4oe2ff4hhnxkc7x5&st=0kn54gb0&.m3u"
+  },
+  {
+    "title": "Hija del fuego",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/4WRrWmk5BJhlBOFEK0VWWFxamqU.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Hija%20del%20fuego%20(2025)"
+  },
+  {
+    "title": "La bestia en mí",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/fr57huR86UiVWJr6C7S8wRaghZw.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/gqsnlizppw94sgxlk5ju9/La-bestia-en-m-2025?rlkey=9pq3oh7k1pz14j93xd5mxvsaf&st=h254imzr&.m3u"
+  },
+  {
+    "title": "Stranger Things",
+    "year": "2016",
+    "poster": "https://image.tmdb.org/t/p/original/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/5chyx5mhsm6ud73qr3gxq/Stranger-Things-2016?rlkey=qxhj7wmyw1uxd3oym3fa46dsi&st=b3h0deey&.m3u"
+  },
+  {
+    "title": "El cuco de cristal",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/ac9e5FC2DlJZZcgBtQ5Jr2973uz.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/El%20cuco%20de%20cristal%20(2025)"
+  },
+  {
+    "title": "El ultimo samurai en pie",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/qEm5qyanHN1VUN3hMwh3Zg2Qnqz.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/El%20ultimo%20samurai%20en%20pie%20(2025)"
+  },
+  {
+    "title": "50 Seconds: The Fernando Baez Sosa Case",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/svXvFanF718EaHk8UG7NHHIZMUl.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/50%20Seconds%20The%20Fernando%20B%C3%A1ez%20Sosa%20Case%20(2025)"
+  },
+  {
+    "title": "fake",
+    "year": "2022",
+    "poster": "https://image.tmdb.org/t/p/original/79CMa8JkC3xULWdvgwTnTUEoTsR.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/fake(2022)"
+  },
+  {
+    "title": "The Witcher",
+    "year": "2019",
+    "poster": "https://image.tmdb.org/t/p/original/LnhRnyCLTcqwT4vKwcg61kNIQl.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/The%20Witcher%20(2019)"
+  },
+  {
+    "title": "La agente encubierta",
+    "year": "2015",
+    "poster": "https://image.tmdb.org/t/p/original/5frjq2ZQ6UysQGCZY4Fh36dmAUd.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/tfebjzqggzr8m6tq0wdpc/La-agente-encubierta-2015?rlkey=4ej12qaz3qso6kej1zujqvauq&st=die4jedr&.m3u"
+  },
+  {
+    "title": "Ell monstruo de Florencia",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/6rUEuEfaFAyhR4PJV5FRxcGzkrS.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/El%20monstruo%20de%20Florencia%20(2025)"
+  },
+  {
+    "title": "El monstruo de Florencia",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/6rUEuEfaFAyhR4PJV5FRxcGzkrS.jpg",
+    "file": "https://dl.dropbox.com/scl/fi/uj9p1jsavr6spexlov1py/Monstruo-de-Florencia-2025.m3u?rlkey=10fxbl13y4vmcmjckqo4eiq0a&st=fl5hyyik&.m3u"
+  },
+  {
+    "title": "nadie nos vio partir",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/nOjhJqlWYDZHuskzGmZKdgoxlXN.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/nadie%20nos%20vio%20partir%20(2025)"
+  },
+  {
+    "title": "El refugio atomico",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/sSaPOors7XFNRtP9qsIZ7oeLgkh.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/El%20refugio%20at%C3%B3mico%20(2025)"
+  },
+  {
+    "title": "Splinter Cell Deathwatch",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/tgKYnJlze79IUKkPmtsW2nSUeeB.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Splinter%20Cell%20Deathwatch%20(2025)"
+  },
+  {
+    "title": "Plan de resurreccion",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/yq4TfasaovGloVDXTIdfO132v39.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Plan%20de%20resurrecci%C3%B3n%20(2025)"
+  },
+  {
+    "title": "Nero the Assassin",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/77767BnO2ZIEBmkgqjQqTZnz9eh.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/N%C3%A9ro%20the%20Assassin%20(2025)"
+  },
+  {
+    "title": "la nueva brigada",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/ifHhwXs52bofSvgoUWFKPTyIy6v.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/la%20nueva%20brigada%20(2025)"
+  },
+  {
+    "title": "animal",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/w200/vYczshDGYktciJdcdxWpWManGiD.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/animal%20(2025)"
+  },
+  {
+    "title": "Boots",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/eEwe68oPFFDU4ehZ3sXiETE44Rt.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Boots%20(2025)"
+  },
+  {
+    "title": "Chica mascara",
+    "year": "2023",
+    "poster": "https://image.tmdb.org/t/p/original/6SP6NiyFxzUaegvg4TB3TMZlv8H.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Mask%20Girl%20(2023)"
+  },
+  {
+    "title": "incontrolables",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/q3V4oTRAnOnp8irVHaQeO7JkYzx.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/incontrolables%20(2025)"
+  },
+  {
+    "title": "pide un deseo",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/opop2u7Jav6lMNL8fSBTzOeFBDz.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Genio%2C%20pide%20un%20deseo%20(2025)"
+  },
+  {
+    "title": "Monster The Ed Gein Story",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/2RVFksm4DF17XZSXMVbNh1qDSOr.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Monster%20The%20Ed%20Gein%20Story%20(2025)"
+  },
+  {
+    "title": "Jovenes millonarios",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/auC6veplvhh9TsxCxw5qJK6Xm5Y.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Jovenes%20millonarios%20(2025)"
+  },
+  {
+    "title": "Rehen",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/3dvbR2dbwU6vC8zTqBU8OrCUozk.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Rehen%20(2025)"
+  },
+  {
+    "title": "Ríos del destino",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/2heNhOUKqZDeUNPuxX2R4YJuSky.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/R%C3%ADos%20del%20destino%20(2025)"
+  },
+  {
+    "title": "Dos tumbas",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/cRv9pVrUiAPWWgqzJgRfS81oijz.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Dos%20tumbas%20(2025)"
+  },
+  {
+    "title": "las muertas",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/xu8cHTI9lAKgxQ4YHjhrvbeSlnS.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/las%20muertas%20(2025)"
+  },
+  {
+    "title": "Marianne",
+    "year": "2019",
+    "poster": "https://image.tmdb.org/t/p/original/hpeaMzflHMEepUGiCjXld7lrnC2.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Marianne%20(2019)"
+  },
+  {
+    "title": "Mr. Robot",
+    "year": "2015",
+    "poster": "https://image.tmdb.org/t/p/original/q7FzUmsCtYNAwWZ5PTACZLngssg.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Mr.%20Robot%20(2015)"
+  },
+  {
+    "title": "Lucifer",
+    "year": "2016",
+    "poster": "https://image.tmdb.org/t/p/original/36XZcHgim0NlxT6y2we4twWZD4A.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Lucifer%20(2016)"
+  },
+  {
+    "title": "Arnold",
+    "year": "2023",
+    "poster": "https://image.tmdb.org/t/p/original/o9KmWrG9rbFhB7jWW4vFHTmqv28.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Arnold%20(2023)"
+  },
+  {
+    "title": "Bulgasal: Almas inmortales",
+    "year": "2021",
+    "poster": "https://image.tmdb.org/t/p/original/hGtsGoccGg87FBqsokkoyHWX9cL.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Bulgasal%20Immortal%20Souls%20(2021)"
+  },
+  {
+    "title": "mercado",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/fNJarIm84EcMPISFtRXuT56rqVI.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/mercado%20(2025)"
+  },
+  {
+    "title": "gatillo",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/9KWjsphxIbv0eJykbUafGKxCEHv.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/gatillo%20(2025)"
+  },
+  {
+    "title": "MERLINA",
+    "year": "2022",
+    "poster": "https://image.tmdb.org/t/p/original/wFvfqUNUSxjT3zDOKhryKiV9YEt.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/merlina%20(2022)2.0"
+  },
+  {
+    "title": "Weak Hero",
+    "year": "2022",
+    "poster": "https://image.tmdb.org/t/p/original/xRw3akJQdfgqx0x4fiHW7nIkEUJ.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Weak%20Hero%20(2022)"
+  },
+  {
+    "title": "The Sandman",
+    "year": "2022",
+    "poster": "https://image.tmdb.org/t/p/original/vfJ1nBnqiiRWZWv3ZvtFWO5zccg.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Sandman%20(2022)"
+  },
+  {
+    "title": "Los supervivientes",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/jJkrVVMuiQyrYwHp8gMKWANDntF.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Los%20supervivientes%20(2025)"
+  },
+  {
+    "title": "dia cero",
+    "year": "2015",
+    "poster": "https://image.tmdb.org/t/p/original/odIyR46aAX59dvQ1ON4P53ow1aE.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/D%C3%ADa%20cero%20(2025)"
+  },
+  {
+    "title": "Unicornio salvaje",
+    "year": "2025",
+    "poster": "https://raw.githubusercontent.com/tokio14-dot/imagen/refs/heads/main/unicor.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Unicornio%20salvaje%20(2025)"
+  },
+  {
+    "title": "Los gringo hunters",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/gut76EbVg6UoMKm3tBXDaAhAP1G.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Los%20gringo%20hunters%20(2025)"
+  },
+  {
+    "title": "Sol negro",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/original/jPJiBzIb0TuqUAEJ7L8WNQ39nh7.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Sol%20negro%20(2025)"
+  },
+  {
+    "title": "Division Palermo",
+    "year": "2023",
+    "poster": "https://image.tmdb.org/t/p/original/jffhwRp7gdZKiUDelXQSg0jtT76.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/anime-cortos/refs/heads/main/Divisi%C3%B3n%20Palermo%20(2023)"
+  },
+  {
+    "title": "The End of the F***ing World",
+    "year": "2017",
+    "poster": "https://image.tmdb.org/t/p/original/vEFQSc727GSkvAHbxVrTPWA9Ro7.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/pecezuelo/refs/heads/main/The%20End%20of%20the%20F***ing%20World%20(2017)"
+  },
+  {
+    "title": "El juego del calamar",
+    "year": "",
+    "poster": "https://image.tmdb.org/t/p/original/1QdXdRYfktUSONkl1oD5gc6Be0s.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/sagas/refs/heads/main/calammar%201"
+  },
+  {
+    "title": "El problema de los 3 cuerpos",
+    "year": "2024",
+    "poster": "https://image.tmdb.org/t/p/original/6Dc9mMl083cVpNknWzALCw7JYPH.jpg",
+    "file": "https://raw.githubusercontent.com/tokio14-dot/cuentos/refs/heads/main/elproblemadelos3cuerpos.m3u"
+  },
+  {
+    "title": "Orange is the new black latino",
+    "year": "2013",
+    "poster": "https://image.tmdb.org/t/p/w154/ekaa7YjGPTkFLcPhwWXTnARuCEU.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Orange%20is%20the%20new%20black"
+  },
+  {
+    "title": "Cyberpunk:Edgerunners latino",
+    "year": "2022",
+    "poster": "https://pelisimg.online/cover/cyberpunk-edgerunners-2-1669011318.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Cyberpunk"
+  },
+  {
+    "title": "El Eternauta",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/w154/fDdyEJeX0b4CiZBlSuh2oqHAb2f.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/El%20Eternauta"
+  },
+  {
+    "title": "100 AN DE SOLEDAD",
+    "year": "2024",
+    "poster": "https://image.tmdb.org/t/p/original/yZ0HCHe4rMFBWMEqmt1gGyjU7ZK.jpg",
+    "file": "https://archive.org/download/la-ninera-4/cienanods0l3dad.m3u"
+  },
+  {
+    "title": "desencanto",
+    "year": "2018",
+    "poster": "https://image.tmdb.org/t/p/original/1WynayCqKRzrl4cFZR8NOfiDwd6.jpg",
+    "file": "https://archive.org/download/la-ninera-4/desencanto.m3u"
+  },
+  {
+    "title": "OP2 desencanto",
+    "year": "2018",
+    "poster": "https://image.tmdb.org/t/p/original/1WynayCqKRzrl4cFZR8NOfiDwd6.jpg",
+    "file": "https://archive.org/download/boku-no-hero-4/desencanto.m3u"
+  },
+  {
+    "title": "Misterios sin Resolver",
+    "year": "1988",
+    "poster": "https://image.tmdb.org/t/p/original/lEKsuLjivwkgNb9Y6Upj86aabdK.jpg",
+    "file": "https://archive.org/download/la-ninera-4/misteriosinr3s0lv3r1.m3u"
+  },
+  {
+    "title": "Devilman Crybaby",
+    "year": "2018",
+    "poster": "https://image.tmdb.org/t/p/original/9OvSVH1KJQRlLzOVLEGHta9pwfX.jpg",
+    "file": "https://archive.org/download/spartacus_202412/DEVILMAN.m3u"
+  },
+  {
+    "title": "COBRA KAI TEMPORADA 6 LATINO",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/COBRA KAI.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Cobra%20kai%20temporada%206"
+  },
+  {
+    "title": "3%",
+    "year": "2016",
+    "poster": "https://image.tmdb.org/t/p/original/wCQP1El20FFncM0lIYcaW3Kq19o.jpg",
+    "file": "https://github.com/linkarg13/SERIES2/releases/download/M3u/3.m3u"
+  },
+  {
+    "title": "Terminator Zero latino",
+    "year": "2024",
+    "poster": "https://media.themoviedb.org/t/p/w300_and_h450_bestv2/zEPdAqxCdvHuOAVwbr8tWCQK6A0.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Terminator%20Zero"
+  },
+  {
+    "title": "The Umbrella Academy",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/the-umbrella-academy.jpg",
+    "file": "https://raw.githubusercontent.com/BrianRVP/Cuantas/main/The%20Umbrella%20Academy"
+  },
+  {
+    "title": "Sex education latino",
+    "year": "2023",
+    "poster": "https://pelisimg.online/cover/sex-education.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/sex%20education%20temporada%203%20y%204"
+  },
+  {
+    "title": "Arcane",
+    "year": "2021",
+    "poster": "https://image.tmdb.org/t/p/w300/ohGz4HDYGTite1GmRhRuBMVAn03.jpg",
+    "file": "https://archive.org/download/si2_20220111/arck.m3u"
+  },
+  {
+    "title": "DRAMA TOTAL",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/DRAMA TOTAL.jpg",
+    "file": "http://archive.org/download/ns_20210520/DRAMATOTAL.m3u"
+  },
+  {
+    "title": "CLOSE ENOUGH",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/CLOSE ENOUGH.jpg",
+    "file": "http://archive.org/download/clo-eno/Clo%20Eno.m3u"
+  },
+  {
+    "title": "BETTER CALL SAUL",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/BETTER CALL SAUL.jpg",
+    "file": "http://archive.org/download/ns_20210520/saul.m3u"
+  },
+  {
+    "title": "HAPPY!",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/happy.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Happy!"
+  },
+  {
+    "title": "BLACK MIRROR",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/BLACK MIRROR.jpg",
+    "file": "http://archive.org/download/ns_20210520/BLACK%20MIRR.m3u"
+  },
+  {
+    "title": "BLACK SUMMER",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/BLACK SUMMER.jpg",
+    "file": "http://archive.org/download/black-summer-serie/BLACK%20SUMMER%20%20SERIE.m3u"
+  },
+  {
+    "title": "ARROW",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/ARROW.jpg",
+    "file": "http://archive.org/download/ns_20210520/arrow.m3u"
+  },
+  {
+    "title": "BOJACK HORSEMAN",
+    "year": "",
+    "poster": "https://pics.filmaffinity.com/bojack_horseman-687229611-mmed.jpg",
+    "file": "http://archive.org/download/ns_20210520/BOJA.m3u"
+  },
+  {
+    "title": "CASA DE FLORES",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/CASA DE FLORES.jpg",
+    "file": "http://archive.org/download/ns_20210520/casa%20de%20flores%20.m3u"
+  },
+  {
+    "title": "CASTLEVANIA",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/CASTLEVANIA.jpg",
+    "file": "http://archive.org/download/ns_20210520/CASTEL.m3u"
+  },
+  {
+    "title": "One Piece:Live Action latino",
+    "year": "2023",
+    "poster": "https://image.tmdb.org/t/p/w154/fsQ2KHbZk12z3h3dba2ActMEudj.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/One%20piece%20live%20action"
+  },
+  {
+    "title": "CLUB DE CUERVOS",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/CLUB DE CUERVOS.jpg",
+    "file": "http://archive.org/download/ns_20210520/CLUBCUERVOS.m3u"
+  },
+  {
+    "title": "DAYBREAK",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/DAYBREAK.jpg",
+    "file": "http://archive.org/download/t-1dbfifkdudkx_202010/T1dbfifkdudkx.m3u"
+  },
+  {
+    "title": "Alice in borderlandd",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/alice-in-borderland-2-1607758082.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Series%20de%20netflix"
+  },
+  {
+    "title": "Madam C.J. Walker: Una Mujer Hecha a si Misma",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/madam-c-j-walker-una-mujer-hecha-a-si-misma-1587222033.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Madam%20C.J.%20Walker%3A%20Una%20mujer%20hecha%20a%20si%20misma"
+  },
+  {
+    "title": "Black Mirror temporada 6 latino",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/black-mirror.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Black%20mirror%20temporada%206"
+  },
+  {
+    "title": "Cortar por la linea de puntos castellano",
+    "year": "2021",
+    "poster": "https://pelisimg.online/cover/cortar-por-la-linea-de-puntos-1689749846.png",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Cortar%20por%20la%20linea%20de%20puntos"
+  },
+  {
+    "title": "Startup",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/startup-1669428540.png",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Startup"
+  },
+  {
+    "title": "Woo:Una abogada extraordinaria",
+    "year": "",
+    "poster": "https://image.tmdb.org/t/p/w154/yv57TccCkgdy3St7rspBPKROeRK.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Woo%3AUna%20abogada%20extraordinaria"
+  },
+  {
+    "title": "CupHead Show! Latino",
+    "year": "2022",
+    "poster": "https://pelisimg.online/cover/la-serie-de-cuphead.png",
+    "file": "https://raw.githubusercontent.com/MonkeyDluffy000/Anime/main/CupHead%20Show%20(2022)"
+  },
+  {
+    "title": "XINA",
+    "year": "",
+    "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/qjUn6GVZVDifLHB7bvVrgZsOfzE.jpg",
+    "file": "https://dl.dropbox.com/s/qybhybywfjkupuq/xen4.m3u"
+  },
+  {
+    "title": "Los Bridgerton",
+    "year": "2024",
+    "poster": "https://pelisimg.online/cover/los-bridgerton.png",
+    "file": "https://raw.githubusercontent.com/BrianRVP/Cuantas/main/Bridgestone"
+  },
+  {
+    "title": "dulce hogar",
+    "year": "",
+    "poster": "https://www.themoviedb.org/t/p/w220_and_h330_face/u8sLAJUvY9yzWqtVfKRQz5yin3D.jpg",
+    "file": "https://raw.githubusercontent.com/linkarg13/SERIES/main/DULCEHOGAR"
+  },
+  {
+    "title": "Los detectives difuntos latino",
+    "year": "2024",
+    "poster": "https://image.tmdb.org/t/p/w154/thkeCJlHhBj2LmxqR7kfHYzOsl9.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Los%20detectives%20difuntos"
+  },
+  {
+    "title": "CADAVERES",
+    "year": "",
+    "poster": "https://www.themoviedb.org/t/p/w440_and_h660_face/qoFkjFwSb4NM6ZHpIZW9iKgXA4e.jpg",
+    "file": "https://raw.githubusercontent.com/linkarg13/SERIES/main/Criminales"
+  },
+  {
+    "title": "OKUPAS",
+    "year": "",
+    "poster": "https://image.tmdb.org/t/p/original/5uf6L2w2QRomahGMCniHskNOQWf.jpg",
+    "file": "https://raw.githubusercontent.com/linkarg13/SERIES/main/OKUPAS"
+  },
+  {
+    "title": "Avatar:La leyenda de aang live action latino",
+    "year": "2024",
+    "poster": "https://image.tmdb.org/t/p/w154/ulGaOy0dUXAm8V2XRmIrQ3xE8lt.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Avatar%20live%20action"
+  },
+  {
+    "title": "cuerpo en llamas",
+    "year": "",
+    "poster": "https://www.cuevana3.eu/_next/image?url=https%3A%2F%2Fimage.tmdb.org%2Ft%2Fp%2Foriginal%2F3Iw27VOUE9PGjrupjDAvPnlbGR9.jpg&w=640&q=75",
+    "file": "https://raw.githubusercontent.com/linkarg13/Cuerpoenllamas/main/Cuerpo%20en%20llamas"
+  },
+  {
+    "title": "EL MITO DE SISIFO",
+    "year": "",
+    "poster": "https://repro12.estrenosdoramas.us/Sisyphus.png",
+    "file": "https://archive.org/download/elch4v0/sisy.m3u"
+  },
+  {
+    "title": "EL MUNDO DE BEAKMAN {1992}",
+    "year": "",
+    "poster": "http://archive.org/download/gonzalez-narvaez/b34ckm4.jpg",
+    "file": "http://archive.org/download/ns_20210520/BECMAN.m3u"
+  },
+  {
+    "title": "Parasyte:Los grises latino",
+    "year": "2024",
+    "poster": "https://image.tmdb.org/t/p/w154/zfwbbab1yfHAjFbbClh1jYoV8gi.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Parasyte%20los%20grises"
+  },
+  {
+    "title": "EL MUNDO OCULTO DE SABRINA",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/EL MUNDO OCULTO DE SABRINA.jpg",
+    "file": "http://archive.org/download/kuhlman_1/Series/series/El%20mundo%20oculto%20de%20sabrina%20opc%202.m3u"
+  },
+  {
+    "title": "EL ROBO DEL SIGLO",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/EL ROBO DEL SIGLO.jpg",
+    "file": "http://archive.org/download/t-1erdsfugjxuv/T1erdsfugjxuv.m3u"
+  },
+  {
+    "title": "ELITE",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/ELITE.jpg",
+    "file": "https://archive.org/download/elch4v0/Elite.m3u"
+  },
+  {
+    "title": "ESTA MIERDA ME SUPERA",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/ESTA MIERDA ME SUPERA .jpg",
+    "file": "http://archive.org/download/esta-mierda-me-supera/Esta%20mierda%20me%20supera.m3u"
+  },
+  {
+    "title": "LEJOS",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/LEJOS.jpg",
+    "file": "http://archive.org/download/t-1la/T1la.m3u"
+  },
+  {
+    "title": "LOCKE AND KEY",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/LOCKE AND KEY.jpg",
+    "file": "http://archive.org/download/ns_20210520/lock.m3u"
+  },
+  {
+    "title": "Sonic Boom Latino",
+    "year": "2014",
+    "poster": "https://flxt.tmsimg.com/assets/p11213278_b_v13_aa.jpg",
+    "file": "https://raw.githubusercontent.com/MonkeyDluffy000/Anime/main/Sonic%20Boom%20(2014)"
+  },
+  {
+    "title": "Sonic Prime 2022 Latino",
+    "year": "",
+    "poster": "https://pics.filmaffinity.com/sonic_prime-145481181-mmed.jpg",
+    "file": "https://raw.githubusercontent.com/MonkeyDluffy000/Anime/main/Sonic%20Prime%202022%20(Netflix)"
+  },
+  {
+    "title": "HIGH SCORE",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/HIGH SCORE.jpg",
+    "file": "http://archive.org/download/ns_20210520/high%20score.m3u"
+  },
+  {
+    "title": "FINAL SPACE",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/FINAL SPACE.jpg",
+    "file": "http://archive.org/download/ns_20210520/FINAL.m3u"
+  },
+  {
+    "title": "GAMBITO DE DAMA",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/GAMBITO DE DAMA.jpg",
+    "file": "http://archive.org/download/gam_20201208/GAM.m3u"
+  },
+  {
+    "title": "GUAU QUE AMIGO",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/GUAU QUE AMIGO.jpg",
+    "file": "http://archive.org/download/ns_20210520/GUAU.m3u"
+  },
+  {
+    "title": "Haunted 2018",
+    "year": "",
+    "poster": "http://archive.org/download/h-4-unt-3-d/H4UNT3D.jpg",
+    "file": "http://archive.org/download/shing089/H4un73d.m3u"
+  },
+  {
+    "title": "HOW TO GET AWAY WITH MURDER",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/HOW TO GET AWAY WITH MURDER.jpg",
+    "file": "http://archive.org/download/hm_20200929/HTGAWM.m3u"
+  },
+  {
+    "title": "KINGDOM",
+    "year": "",
+    "poster": "https://m.media-amazon.com/images/M/MV5BNTBlZmE4YzItNTY5Mi00NmIxLTlhZTAtOWIxNjFlNTMzNmI1XkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_FMjpg_UX1000_.jpg",
+    "file": "https://archive.org/download/elch4v0/kindo.m3u"
+  },
+  {
+    "title": "Jurassic WordlCampamento Crustaceo",
+    "year": "",
+    "poster": "http://archive.org/download/losmejoresexitos/c4mpcr35.jpg",
+    "file": "http://archive.org/download/losmejoresexitos/tempfd.m3u"
+  },
+  {
+    "title": "KINGS AVATAR",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/KINGS AVATAR.jpg",
+    "file": "http://archive.org/download/ns_20210520/KINGA.m3u"
+  },
+  {
+    "title": "LA CASA DE PAPEL",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/LA CASA DE PAPEL.jpg",
+    "file": "http://archive.org/download/ns_20210520/la%20casa%20de%20pape.m3u"
+  },
+  {
+    "title": "LA CASA DE LAS FLORES",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/LA CASA DE LAS FLORES.jpg",
+    "file": "http://archive.org/download/ns_20210520/LACASADELASFLORES.m3u"
+  },
+  {
+    "title": "LOVE DEATH AND ROBOTS",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/LOVE DEATH AND ROBOTS.jpg",
+    "file": "http://archive.org/download/peliculas_201903/LoveDeath%20Robots.m3u"
+  },
+  {
+    "title": "MY HOLO LOVE",
+    "year": "",
+    "poster": "https://www23.estrenosdoramas.net/wp-content/uploads/2020/02/My_Holo_Love.jpg?x64181",
+    "file": "https://archive.org/download/elch4v0/my%20holo%20love.m3u"
+  },
+  {
+    "title": "NACION Z",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/NACION Z.jpg",
+    "file": "http://archive.org/download/ns_20210520/NACION%20Z.m3u"
+  },
+  {
+    "title": "NICKY JAM EL GANADOR",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/NICKY JAM EL GANADOR.jpg",
+    "file": "http://archive.org/download/ns_20210520/ELGAN.m3u"
+  },
+  {
+    "title": "OSCURO DESEO",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/OSCURO DESEO .jpg",
+    "file": "http://archive.org/download/t-1odcnkdbejrvq/T1odcnkdbejrvq.m3u"
+  },
+  {
+    "title": "Peaky Blinders",
+    "year": "",
+    "poster": "https://image.tmdb.org/t/p/w154/ikqlGaEt9lv9LEUX02LO9fNJ0x4.jpg",
+    "file": "https://archive.org/download/elch4v0/P3KY.m3u"
+  },
+  {
+    "title": "PINOCCHIO",
+    "year": "",
+    "poster": "https://pm1.narvii.com/6061/68c942f64555dfba90e3f78c25317b5be581359f_hq.jpg",
+    "file": "https://archive.org/download/ns_20210520/pinocho.m3u"
+  },
+  {
+    "title": "RAGNAROK",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/RAGNAROK.jpg",
+    "file": "http://archive.org/download/ns_20210520/ragnar.m3u"
+  },
+  {
+    "title": "Rebelde",
+    "year": "2022",
+    "poster": "https://image.tmdb.org/t/p/w300/b1IBsimEJOLjBLYsdBZ1VAcmq73.jpg",
+    "file": "https://archive.org/download/si2_20220111/reb.m3u"
+  },
+  {
+    "title": "RESIDENT EVIL LA TINIEBLA INFINITA",
+    "year": "",
+    "poster": "https://m.media-amazon.com/images/M/MV5BMjAyNDE5YTYtZGVhNC00ZGMxLWIxNmItNDBiYWUwODQ5ZWY1XkEyXkFqcGdeQXVyMTEzMTI1Mjk3._V1_FMjpg_UX1000_.jpg",
+    "file": "https://archive.org/download/elch4v0/residevil.m3u"
+  },
+  {
+    "title": "SALVADOS POR LA CAMPANA",
+    "year": "",
+    "poster": "https://m.media-amazon.com/images/M/MV5BNzEzMzM2ODc1Ml5BMl5BanBnXkFtZTcwMTg2MjAzMQ@@._V1_UY268_CR3,0,182,268_AL_.jpg",
+    "file": "https://archive.org/download/elch4v0/salcam1.m3u"
+  },
+  {
+    "title": "SANTA CLARITA DIET",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/SANTA CLARITA DIET.jpg",
+    "file": "http://archive.org/download/ns_20210520/SANDIE.m3u"
+  },
+  {
+    "title": "SED DE REVANCHA GET EVEN",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/SED DE REVANCHA GET EVEN.jpg",
+    "file": "http://archive.org/download/sedven/sedven.m3u"
+  },
+  {
+    "title": "SEX EDUCATION",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/SEX EDUCATION.jpg",
+    "file": "http://archive.org/download/ns_20210520/seed.m3u"
+  },
+  {
+    "title": "Smallville (Superman) 2001",
+    "year": "",
+    "poster": "https://archive.org/download/sup_20230128/sup.png",
+    "file": "https://dl.dropbox.com/s/ma09c5wwkbtekws/Smallville%20Superman.m3u"
+  },
+  {
+    "title": "SOMBRA Y HUESO",
+    "year": "",
+    "poster": "https://m.media-amazon.com/images/M/MV5BNTNhY2JlMmItMGMzZi00ZTM2LTlmNTItZDBkMGVhNGJhYWRhXkEyXkFqcGdeQXVyMTEyMjM2NDc2._V1_FMjpg_UX1000_.jpg",
+    "file": "https://archive.org/download/elch4v0/huesom.m3u"
+  },
+  {
+    "title": "SWEET HOME",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/SWEET HOME.jpg",
+    "file": "http://archive.org/download/sweethome_202101/SWEETHOME.m3u"
+  },
+  {
+    "title": "Sweet Tooth",
+    "year": "",
+    "poster": "https://m.media-amazon.com/images/M/MV5BOTk4ZDRhYzEtZWExNy00MjIyLTgyYmMtN2Y2MzA4YzZhZTZmXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_FMjpg_UX1000_.jpg",
+    "file": "https://archive.org/download/elch4v0/sweedr.m3u"
+  },
+  {
+    "title": "THE CROWN",
+    "year": "",
+    "poster": "https://www.themoviedb.org/t/p/w220_and_h330_face/1M876KPjulVwppEpldhdc8V4o68.jpg",
+    "file": "https://raw.githubusercontent.com/BrianRVP/lista.m3u/main/Temporadas%20The%20crown"
+  },
+  {
+    "title": "THE END OF THE WORD",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/THE END OF THE WORD.jpg",
+    "file": "http://archive.org/download/macross-frontier/the%20end%20of%20the%20world00.m3u"
+  },
+  {
+    "title": "THE OFFICE",
+    "year": "",
+    "poster": "",
+    "file": "http://archive.org/download/BU22OK/BU.M3U"
+  },
+  {
+    "title": "THE KING THE ETERNAL MONARCH",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/THE KING THE ETERNAL MONARCH.jpg",
+    "file": "http://archive.org/download/king_20201210/KING.m3u"
+  },
+  {
+    "title": "TITANS",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/TITANS.jpg",
+    "file": "http://archive.org/download/ns_20210520/TITAN.m3u"
+  },
+  {
+    "title": "TOUCH",
+    "year": "",
+    "poster": "https://www23.estrenosdoramas.net/wp-content/uploads/2020/01/Touch.jpg",
+    "file": "https://archive.org/download/elch4v0/TOUCH.m3u"
+  },
+  {
+    "title": "TROLLHUNTER",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/TROLLHUNTER.jpg",
+    "file": "http://archive.org/download/ns_20210520/trollhunter.m3u"
+  },
+  {
+    "title": "VIKINGOS",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/VIKINGOS.jpg",
+    "file": "http://archive.org/download/113y-3s/VK.m3u"
+  },
+  {
+    "title": "VIZ A VIZ",
+    "year": "",
+    "poster": "http://archive.org/download/125452445445/VIZ A VIZ.jpg",
+    "file": "http://archive.org/download/t-5vavfufjfkxksu/T5vavfufjfkxksu.m3u"
+  },
+  {
+    "title": "Archivo 81 latino",
+    "year": "2022",
+    "poster": "https://pelisimg.online/cover/archive-81-2-1642252803.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Archivo%2081"
+  },
+  {
+    "title": "The OA",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/the-oa.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/The%20OA"
+  },
+  {
+    "title": "Rumbo al infierno latino",
+    "year": "2021",
+    "poster": "https://pelisimg.online/cover/rumbo-al-infierno-1669344118.png",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Rumbo%20al%20infierno"
+  },
+  {
+    "title": "Anne with an E",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/anne-with-an-e-1598657484.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Anne%20with%20an%20E"
+  },
+  {
+    "title": "Everthing sucks! latino",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/todo-es-una-mierda-everything-sucks.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Everthing%20sucks!"
+  },
+  {
+    "title": "Hemlock grove",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/hemlock-grove.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Hemlock%20grove"
+  },
+  {
+    "title": "The midnight gospel latino",
+    "year": "2020",
+    "poster": "https://pelisimg.online/cover/the-midnight-gospel-1587583248.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/The%20midnight%20gospel"
+  },
+  {
+    "title": "El chapo",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/el-chapo.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/El%20chapo"
+  },
+  {
+    "title": "Como se convirtieron en lideres de sectas latino",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/how-to-become-a-cult-leader-1690765194.png",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Como%20se%20convirtieron%20en%20lideres%20de%20sectas"
+  },
+  {
+    "title": "La Casa de Papel temporada 5",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/la-casa-de-papel.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/La%20casa%20de%20papel%20temporada%205"
+  },
+  {
+    "title": "bebe reno latino",
+    "year": "2024",
+    "poster": "https://www.clarin.com/img/2024/04/22/xCel-AVbY_720x0__1.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/bebe%20reno"
+  },
+  {
+    "title": "Black Mirror temporada 7 latino",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/w154/dw7jYk7EdrkrHozG7F1Yg2eFJTm.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Black%20Mirror%20temporada%207"
+  },
+  {
+    "title": "Devil May Cry latino",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/w154/syY5tQzZDdiwGx71cj1Zz4rtrDL.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Devil%20May%20Cry"
+  },
+  {
+    "title": "Serpientes y Escaleras latino",
+    "year": "2025",
+    "poster": "https://image.tmdb.org/t/p/w154/jSL90vBj3GdGpUbU8L9uGoEFDen.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/Serpientes%20y%20Escaleras"
+  },
+  {
+    "title": "El juego del calamar temporada 3 latino",
+    "year": "2025",
+    "poster": "https://media.themoviedb.org/t/p/w130_and_h195_bestv2/kNbFLwPaFhWqPo8bB8T1kbpf51Q.jpg",
+    "file": "https://raw.githubusercontent.com/Dante5910/Esto-solamente-es-una-prueba/refs/heads/main/El%20juego%20del%20calamar%20temporada%203"
+  },
+  {
+    "title": "Ozark latino",
+    "year": "",
+    "poster": "https://pelisimg.online/cover/ozark.jpg",
+    "file": "https://raw.githubusercontent.com/dragonmaster5678/prueba/main/Ozark"
+  }
+];
+
+let activeYear = 'Todos';
+
+function getYears(){
+  const years = ['Todos',...new Set(MOVIES.map(m=>m.year).filter(Boolean).sort((a,b)=>b-a))];
+  return years;
+}
+
+function renderFilters(){
+  const wrap=document.getElementById('filters');
+  getYears().forEach(y=>{
+    const btn=document.createElement('button');
+    btn.className='filter-btn'+(y===activeYear?' active':'');
+    btn.textContent=y==='Todos'?'Todos':y;
+    btn.onclick=()=>{
+      activeYear=y;
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      renderGrid();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function getFiltered(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  return MOVIES.filter(m=>{
+    const matchYear=activeYear==='Todos'||m.year===activeYear;
+    const matchQ=!q||m.title.toLowerCase().includes(q)||String(m.year).includes(q);
+    return matchYear&&matchQ;
+  });
+}
+
+function filmIcon(){
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>';
+}
+
+function renderGrid(){
+  const movies=getFiltered();
+  const grid=document.getElementById('grid');
+  const sc=document.getElementById('showing-count');
+  grid.innerHTML='';
+  sc.textContent=movies.length+' resultado'+(movies.length!==1?'s':'');
+
+  if(!movies.length){
+    grid.innerHTML='<div class="empty">'+filmIcon()+'<p>No se encontraron resultados.</p></div>';
+    return;
+  }
+
+  movies.forEach((m,i)=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.onclick=()=>openModal(i,movies);
+
+    const poster=m.poster
+      ?'<img class="card-poster" src="'+m.poster+'" alt="'+m.title+'" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">'
+        +'<div class="card-poster-placeholder" style="display:none">'+filmIcon()+'<div class="ph-title">'+m.title+'</div></div>'
+      :'<div class="card-poster-placeholder">'+filmIcon()+'<div class="ph-title">'+m.title+'</div></div>';
+
+    card.innerHTML=poster
+      +'<div class="card-overlay">'
+        +'<div class="ov-title">'+m.title+'</div>'
+        +'<a class="ov-play" href="'+m.file+'" target="_blank">'
+          +'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
+          +'Abrir'
+        +'</a>'
+      +'</div>'
+      +'<div class="card-info">'
+        +'<div class="card-title">'+m.title+'</div>'
+        +'<div class="card-meta">'
+          +(m.year?'<span>'+m.year+'</span>':'')
+        +'</div>'
+      +'</div>';
+
+    grid.appendChild(card);
+  });
+}
+
+function openModal(idx,movies){
+  const m=movies[idx];
+  if(!m)return;
+  const posterHTML=m.poster
+    ?'<img class="modal-poster" src="'+m.poster+'" alt="'+m.title+'" onerror="this.style.display='none'">'
+    :'<div class="modal-poster-ph">'+filmIcon()+'</div>';
+
+  document.getElementById('modal-content').innerHTML=posterHTML
+    +'<div class="modal-body">'
+      +'<div class="modal-title">'+m.title+'</div>'
+      +'<div class="modal-meta">'+(m.year?'<span>'+m.year+'</span>':'')+'</div>'
+      +'<div class="modal-actions">'
+        +'<a class="btn-primary" href="'+m.file+'" target="_blank">'
+          +'<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>'
+          +'Reproducir'
+        +'</a>'
+      +'</div>'
+    +'</div>';
+
+  document.getElementById('modal-bg').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-bg')&&!e.target.closest('.modal-close'))return;
+  document.getElementById('modal-bg').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('modal-bg').classList.remove('open');document.body.style.overflow=''}});
+document.getElementById('search').addEventListener('input',renderGrid);
+
+function init(){
+  document.getElementById('nav-count').textContent=MOVIES.length+' títulos';
+  renderFilters();
+  renderGrid();
+}
+init();
+</script>
+</body>
+</html>
